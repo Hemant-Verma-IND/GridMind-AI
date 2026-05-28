@@ -50,7 +50,7 @@ export default function LoginForm({ onSuccess, onError, isLoading, setIsLoading,
       localStorage.setItem("prime_mode", "hardware");
       localStorage.setItem("prime_device_id", "58FC3F030000");
       localStorage.setItem("prime_device_name", "Main PRIME Sentinel");
-      window.open("https://prime-nitrkl.vercel.app/", "_blank");
+      window.open("https://prime-digital-fe.vercel.app/", "_blank");
     }, 800);
   };
 

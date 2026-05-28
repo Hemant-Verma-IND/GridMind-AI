@@ -92,32 +92,8 @@ export default function AuthPage() {
     setErrorMsg(msg);
   };
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setErrorMsg("");
-    try {
-      const res = await fetch("/api/auth/google", {
-        method: "POST"
-      });
-      const data = await res.json();
-      if (res.status === 200) {
-        localStorage.setItem("operator_name", data.operator.name);
-        localStorage.setItem("operator_role", data.operator.role);
-        
-        const isConfigured = localStorage.getItem("prime_paired") === "true";
-        if (isConfigured) {
-          router.push("/dashboard");
-        } else {
-          router.push("/dashboard/setup");
-        }
-      } else {
-        setErrorMsg("Google OAuth processing failed");
-      }
-    } catch (err) {
-      setErrorMsg("Google Authentication server unreachable");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    router.push("/dashboard/unavailable");
   };
 
   return (
@@ -175,7 +151,7 @@ export default function AuthPage() {
               <span className="text-stone-300 font-light text-sm">×</span>
 
               <a 
-                href="https://prime-nitrkl.vercel.app/" 
+                href="https://prime-digital-fe.vercel.app/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center gap-2 group"

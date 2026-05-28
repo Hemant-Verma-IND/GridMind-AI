@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Bell, User, Settings, LogOut, Check, X, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Bell, User, Settings, LogOut, Check, X } from "lucide-react";
 
 export default function DashboardNavbar() {
   const router = useRouter();
@@ -40,8 +40,15 @@ export default function DashboardNavbar() {
     setShowEditModal(false);
   };
 
-  const handleLogout = () => {
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      localStorage.removeItem("operator_name");
+      localStorage.removeItem("operator_role");
+      router.push("/");
+    } catch (err) {
+      router.push("/");
+    }
   };
 
   return (
@@ -51,14 +58,14 @@ export default function DashboardNavbar() {
           
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transition-all group-hover:scale-[1.02]">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-stone-50 p-1.5 flex items-center justify-center border border-stone-200 transition-all group-hover:scale-105">
                 <img 
                   src="/logo.png" 
-                  alt="GridMind AI Logo" 
+                  alt="GridMind AI" 
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="font-extrabold text-xl tracking-tight text-[#1E2522]">
+              <span className="font-extrabold text-xl tracking-tight text-stone-900">
                 GridMind AI
               </span>
             </Link>
