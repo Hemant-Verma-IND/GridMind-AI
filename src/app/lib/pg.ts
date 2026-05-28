@@ -1,11 +1,13 @@
 import { Pool } from "pg";
 
 const pool = new Pool({
-  user: process.env.PG_USER || "postgres",
-  password: process.env.PG_PASSWORD || "postgres",
-  host: process.env.PG_HOST || "localhost",
-  port: parseInt(process.env.PG_PORT || "5432"),
-  database: process.env.PG_DATABASE || "gridmind_db",
+  connectionString: process.env.DATABASE_URL || (process.env.PG_HOST ? undefined : "postgres://postgres:postgres@localhost:5432/gridmind_db"),
+  user: process.env.DATABASE_URL ? undefined : (process.env.PG_USER || "postgres"),
+  password: process.env.DATABASE_URL ? undefined : (process.env.PG_PASSWORD || "postgres"),
+  host: process.env.DATABASE_URL ? undefined : (process.env.PG_HOST || "localhost"),
+  port: process.env.DATABASE_URL ? undefined : parseInt(process.env.PG_PORT || "5432"),
+  database: process.env.DATABASE_URL ? undefined : (process.env.PG_DATABASE || "gridmind_db"),
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 export const pgDb = {
