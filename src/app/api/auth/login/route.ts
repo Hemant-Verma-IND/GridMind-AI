@@ -1,0 +1,61 @@
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "../../../lib/mongodb";
+import { verifyPassword, encryptSession } from "../../../lib/crypto";
+
+export async function POST(request: Request) {
+  try {
+    const payload = await request.json();
+    const { email, password } = payload;
+
+    if (typeof email !== "string" || typeof password !== "string") {
+      return NextResponse.json({ error: "Malformed payload structure" }, { status: 400 });
+    }
+
+    const sanitizedEmail = email.trim().toLowerCase();
+
+    const { db } = await connectToDatabase();
+
+    const user = await db.collection("users").findOne({ email: sanitizedEmail });
+    if (!user) {
+      return NextResponse.json({ error: "Invalid security credentials" }, { status: 401 });
+    }
+
+    const isValid = verifyPassword(password, user.salt, user.hash);
+    if (!isValid) {
+      return NextResponse.json({ error: "Invalid security credentials" }, { status: 401 });
+    }
+
+    const sessionPayload = JSON.stringify({
+      uid: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      exp: Date.now() + 86400000
+    });
+
+    const encryptedToken = encryptSession(sessionPayload);
+
+    const response = NextResponse.json({
+      success: true,
+      operator: {
+        name: user.name,
+        role: user.role,
+        email: user.email
+      }
+    });
+
+    response.cookies.set({
+      name: "gm_session",
+      value: encryptedToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 86400,
+      path: "/"
+    });
+
+    return response;
+  } catch (error) {
+    return NextResponse.json({ error: "Internal processing failure" }, { status: 500 });
+  }
+}
