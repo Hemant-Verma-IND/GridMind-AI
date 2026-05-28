@@ -92,21 +92,32 @@ export default function AuthPage() {
     setErrorMsg(msg);
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMsg("");
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem("operator_name", "Workspace Operator");
-      localStorage.setItem("operator_role", "Grid Engineer");
-      
-      const isConfigured = localStorage.getItem("prime_paired") === "true";
-      if (isConfigured) {
-        router.push("/dashboard");
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST"
+      });
+      const data = await res.json();
+      if (res.status === 200) {
+        localStorage.setItem("operator_name", data.operator.name);
+        localStorage.setItem("operator_role", data.operator.role);
+        
+        const isConfigured = localStorage.getItem("prime_paired") === "true";
+        if (isConfigured) {
+          router.push("/dashboard");
+        } else {
+          router.push("/dashboard/setup");
+        }
       } else {
-        router.push("/dashboard/setup");
+        setErrorMsg("Google OAuth processing failed");
       }
-    }, 1200);
+    } catch (err) {
+      setErrorMsg("Google Authentication server unreachable");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
