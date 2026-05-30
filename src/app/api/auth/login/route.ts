@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "../../../lib/mongodb";
+import { pgDb } from "../../../lib/pg";
 import { verifyPassword, encryptSession } from "../../../lib/crypto";
 
 export async function POST(request: Request) {
@@ -13,12 +13,16 @@ export async function POST(request: Request) {
 
     const sanitizedEmail = email.trim().toLowerCase();
 
-    const { db } = await connectToDatabase();
+    const result = await pgDb.query(
+      "SELECT id, email, hash, salt, name, role FROM users WHERE email = $1",
+      [sanitizedEmail]
+    );
 
-    const user = await db.collection("users").findOne({ email: sanitizedEmail });
-    if (!user) {
+    if (result.rows.length === 0) {
       return NextResponse.json({ error: "Invalid security credentials" }, { status: 401 });
     }
+
+    const user = result.rows[0];
 
     const isValid = verifyPassword(password, user.salt, user.hash);
     if (!isValid) {
@@ -26,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const sessionPayload = JSON.stringify({
-      uid: user._id.toString(),
+      uid: user.id.toString(),
       email: user.email,
       name: user.name,
       role: user.role,

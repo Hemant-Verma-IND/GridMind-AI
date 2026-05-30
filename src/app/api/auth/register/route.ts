@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "../../../lib/mongodb";
+import { pgDb } from "../../../lib/pg";
 import { hashPassword } from "../../../lib/crypto";
 
 export async function POST(request: Request) {
@@ -25,23 +25,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
     }
 
-    const { db } = await connectToDatabase();
+    const existingCheck = await pgDb.query(
+      "SELECT id FROM users WHERE email = $1", 
+      [sanitizedEmail]
+    );
 
-    const existingUser = await db.collection("users").findOne({ email: sanitizedEmail });
-    if (existingUser) {
+    if (existingCheck.rows.length > 0) {
       return NextResponse.json({ error: "Account resource conflict" }, { status: 409 });
     }
 
     const { hash, salt } = hashPassword(password);
 
-    await db.collection("users").insertOne({
-      email: sanitizedEmail,
-      hash,
-      salt,
-      name: name.trim(),
-      role: role.trim(),
-      created_at: new Date()
-    });
+    await pgDb.query(
+      "INSERT INTO users (email, hash, salt, name, role) VALUES ($1, $2, $3, $4, $5)",
+      [sanitizedEmail, hash, salt, name.trim(), role.trim()]
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {
